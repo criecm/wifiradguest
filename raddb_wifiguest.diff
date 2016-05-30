@@ -1,0 +1,334 @@
+--- raddb.orig/radiusd.conf     2016-05-30 13:29:04.444500881 +0200
++++ raddb/radiusd.conf  2016-02-03 14:04:52.520929000 +0100
+@@ -740,7 +730,7 @@
+        #  Include another file that has the SQL-related configuration.
+        #  This is another file only because it tends to be big.
+        #
+-#      $INCLUDE sql.conf
++       $INCLUDE sql.conf
+ 
+        #
+        #  This module is an SQL enabled version of the counter module.
+@@ -753,6 +743,7 @@
+        #  packets.
+        #
+ #      $INCLUDE sql/mysql/counter.conf
++       $INCLUDE sql/postgresql/mycounter.conf
+ 
+        #
+        #  IP addresses managed in an SQL table.
+diff -bruN raddb.orig/sites-available/default raddb/sites-available/default
+--- raddb.orig/sites-available/default  2016-05-30 13:28:54.669502514 +0200
++++ raddb/sites-available/default       2015-02-02 11:24:11.881505000 +0100
+@@ -67,6 +67,17 @@
+ #  Make *sure* that 'preprocess' comes before any realm if you 
+ #  need to setup hints for the remote radius server
+ authorize {
++
++        if (  "%{sql: SELECT extract  ( epoch from ( to_timestamp(value, 'Mon DD YYYY HH24:MI')))  FROM radcheck where (  Username = '%{User-Name}'  and Attribute = 'First-Login' );}"  >  "%{sql: SELECT  extract ( epoch from  now()) :: bigint ;}"  ) {
++        reject
++        }
++
++#       if ( "%{sql: SELECT now();}" ) {
++#       update control {
++#               Auth-Type := "Accept"
++#       }
++#       }
++
+        #
+        #  Security settings.  Take a User-Name, and do some simple
+        #  checks on it, for spaces and other invalid characters.  If
+@@ -174,7 +185,7 @@
+        #  is meant to mirror the "users" file.
+        #
+        #  See "Authorization Queries" in sql.conf
+-#      sql
++       sql
+ 
+        #
+        #  If you are using /etc/smbpasswd, and are also doing
+@@ -190,7 +201,7 @@
+        #
+        #  Enforce daily limits on time spent logged in.
+ #      daily
+-
++       expireon_login
+        #
+        # Use the checkval module
+ #      checkval
+@@ -403,7 +414,7 @@
+        #  Log traffic to an SQL database.
+        #
+        #  See "Accounting queries" in sql.conf
+-#      sql
++       sql
+ 
+        #
+        #  If you receive stop packets with zero session length,
+@@ -447,11 +458,11 @@
+ #  or rlm_sql module can handle this.
+ #  The rlm_sql module is *much* faster
+ session {
+-       radutmp
++       #radutmp
+ 
+        #
+        #  See "Simultaneous Use Checking Queries" in sql.conf
+-#      sql
++       sql
+ }
+ 
+ 
+@@ -472,7 +483,7 @@
+        #  After authenticating the user, do another SQL query.
+        #
+        #  See "Authentication Logging Queries" in sql.conf
+-#      sql
++       sql
+ 
+        #
+        #  Instead of sending the query to the SQL server,
+@@ -575,12 +586,6 @@
+        Post-Auth-Type REJECT {
+                # log failed authentications in SQL, too.
+ #              sql
+-
+-               # Insert EAP-Failure message if the request was
+-               # rejected by policy instead of because of an
+-               # authentication failure
+-               eap
+-
+                attr_filter.access_reject
+        }
+ }
+diff -bruN raddb.orig/sites-enabled/default raddb/sites-enabled/default
+--- raddb.orig/sites-enabled/default    2016-05-30 13:28:54.669502514 +0200
++++ raddb/sites-enabled/default 2015-02-02 11:24:11.881505000 +0100
+@@ -67,6 +67,17 @@
+ #  Make *sure* that 'preprocess' comes before any realm if you 
+ #  need to setup hints for the remote radius server
+ authorize {
++
++        if (  "%{sql: SELECT extract  ( epoch from ( to_timestamp(value, 'Mon DD YYYY HH24:MI')))  FROM radcheck where (  Username = '%{User-Name}'  and Attribute = 'First-Login' );}"  >  "%{sql: SELECT  extract ( epoch from  now()) :: bigint ;}"  ) {
++        reject
++        }
++
++#       if ( "%{sql: SELECT now();}" ) {
++#       update control {
++#               Auth-Type := "Accept"
++#       }
++#       }
++
+        #
+        #  Security settings.  Take a User-Name, and do some simple
+        #  checks on it, for spaces and other invalid characters.  If
+@@ -174,7 +185,7 @@
+        #  is meant to mirror the "users" file.
+        #
+        #  See "Authorization Queries" in sql.conf
+-#      sql
++       sql
+ 
+        #
+        #  If you are using /etc/smbpasswd, and are also doing
+@@ -190,7 +201,7 @@
+        #
+        #  Enforce daily limits on time spent logged in.
+ #      daily
+-
++       expireon_login
+        #
+        # Use the checkval module
+ #      checkval
+@@ -403,7 +414,7 @@
+        #  Log traffic to an SQL database.
+        #
+        #  See "Accounting queries" in sql.conf
+-#      sql
++       sql
+ 
+        #
+        #  If you receive stop packets with zero session length,
+@@ -447,11 +458,11 @@
+ #  or rlm_sql module can handle this.
+ #  The rlm_sql module is *much* faster
+ session {
+-       radutmp
++       #radutmp
+ 
+        #
+        #  See "Simultaneous Use Checking Queries" in sql.conf
+-#      sql
++       sql
+ }
+ 
+ 
+@@ -472,7 +483,7 @@
+        #  After authenticating the user, do another SQL query.
+        #
+        #  See "Authentication Logging Queries" in sql.conf
+-#      sql
++       sql
+ 
+        #
+        #  Instead of sending the query to the SQL server,
+@@ -575,12 +586,6 @@
+        Post-Auth-Type REJECT {
+                # log failed authentications in SQL, too.
+ #              sql
+-
+-               # Insert EAP-Failure message if the request was
+-               # rejected by policy instead of because of an
+-               # authentication failure
+-               eap
+-
+                attr_filter.access_reject
+        }
+ }
+diff -bruN raddb.orig/sql/postgresql/dialup.conf raddb/sql/postgresql/dialup.conf
+--- raddb.orig/sql/postgresql/dialup.conf       2016-05-30 13:28:54.662502742 +0200
++++ raddb/sql/postgresql/dialup.conf    2015-09-24 21:55:06.392926000 +0200
+@@ -135,8 +135,8 @@
+ #######################################################################
+ 
+ # Uncomment simul_count_query to enable simultaneous use checking
+-# simul_count_query = "SELECT COUNT(*) FROM ${acct_table1} WHERE UserName='%{SQL-User-Name}' AND AcctStopTime IS NULL"
+-# simul_verify_query = "SELECT RadAcctId, AcctSessionId, UserName, NASIPAddress, NASPortId, FramedIPAddress, CallingStationId, FramedProtocol FROM ${acct_table1} WHERE UserName='%{SQL-User-Name}' AND AcctStopTime IS NULL"
++simul_count_query = "SELECT COUNT(*) FROM ${acct_table1} WHERE UserName='%{SQL-User-Name}' AND AcctStopTime IS NULL"
++#simul_verify_query = "SELECT RadAcctId, AcctSessionId, UserName, NASIPAddress, NASPortId, FramedIPAddress, CallingStationId, FramedProtocol FROM ${acct_table1} WHERE UserName='%{SQL-User-Name}' AND AcctStopTime IS NULL"
+ 
+ 
+ 
+@@ -281,5 +281,6 @@
+ # postauth_query                - Insert some info after authentication
+ #######################################################################
+ postauth_query = "INSERT INTO ${postauth_table} (username, pass, reply, authdate) \
+-  VALUES ('%{User-Name}', '%{%{User-Password}:-Chap-Password}', '%{reply:Packet-Type}', NOW())"
++  VALUES ('%{User-Name}', 'ZOBI', '%{reply:Packet-Type}', NOW())"
++#  VALUES ('%{User-Name}', '%{%{User-Password}:-Chap-Password}', '%{reply:Packet-Type}', NOW())"
+ 
+diff -bruN raddb.orig/sql/postgresql/mycounter.conf raddb/sql/postgresql/mycounter.conf
+--- raddb.orig/sql/postgresql/mycounter.conf    1970-01-01 01:00:00.000000000 +0100
++++ raddb/sql/postgresql/mycounter.conf 2014-04-14 16:24:31.291463000 +0200
+@@ -0,0 +1,85 @@
++# -*- text -*-
++##
++## counter.conf -- PostgreSQL queries for rlm_sqlcounter
++##
++##      $Id: 5757358e34ecad5559f8cfaf838f73ac2c23d136 $
++
++#  Rather than maintaining seperate (GDBM) databases of
++#  accounting info for each counter, this module uses the data
++#  stored in the raddacct table by the sql modules. This
++#  module NEVER does any database INSERTs or UPDATEs.  It is
++#  totally dependent on the SQL module to process Accounting
++#  packets.
++#
++#  The 'sqlmod_inst' parameter holds the instance of the sql
++#  module to use when querying the SQL database. Normally it
++#  is just "sql".  If you define more and one SQL module
++#  instance (usually for failover situations), you can
++#  specify which module has access to the Accounting Data
++#  (radacct table).
++#
++#  The 'reset' parameter defines when the counters are all
++#  reset to zero.  It can be hourly, daily, weekly, monthly or
++#  never.  It can also be user defined. It should be of the
++#  form:
++#       num[hdwm] where:
++#       h: hours, d: days, w: weeks, m: months
++#       If the letter is ommited days will be assumed. In example:
++#       reset = 10h (reset every 10 hours)
++#       reset = 12  (reset every 12 days)
++#
++#  The 'key' parameter specifies the unique identifier for the
++#  counter records (usually 'User-Name').
++#
++#  The 'query' parameter specifies the SQL query used to get
++#  the current Counter value from the database. There are 3
++#  parameters that can be used in the query:
++#               %k      'key' parameter
++#               %b      unix time value of beginning of reset period
++#               %e      unix time value of end of reset period
++#
++#  The 'check-name' parameter is the name of the 'check'
++#  attribute to use to access the counter in the 'users' file
++#  or SQL radcheck or radcheckgroup tables.
++#
++#  DEFAULT  Max-Daily-Session > 3600, Auth-Type = Reject
++#      Reply-Message = "You've used up more than one hour today"
++#
++
++sqlcounter expireon_login {
++        counter-name = Expire-After-Initial-Login
++        check-name = Expire-After
++        sqlmod-inst = sql
++        key = User-Name
++        reset = never
++        query = "SELECT COALESCE ((SELECT EXTRACT(EPOCH FROM( NOW() - acctstarttime))  ::int \
++                                FROM radacct \
++                                WHERE UserName='%{${key}}' \
++                                ORDER BY acctstarttime \
++                                LIMIT 1),0);" 
++}
++
++sqlcounter first-logintest {
++        counter-name = Access-Initial-Login
++        check-name = First-Login
++        sqlmod-inst = sql
++        key = User-Name
++        reset = never
++
++        query = "SELECT COALESCE ((SELECT EXTRACT(EPOCH FROM( to_timestamp(value, 'Mon DD YYYY HH24:MI') - now() ))  ::int \
++                                FROM radcheck \
++                                WHERE ( UserName='%{${key}}' AND Attribute = 'First-Login' ) \
++                                ORDER BY value \
++                                LIMIT 1),0);"
++}
++
++sqlcounter first-login {
++        counter-name = Access-Initial-Login
++        check-name = First-Login
++        sqlmod-inst = sql
++        key = User-Name
++        reset = never
++
++        query = "SELECT extract (epoch FROM  NOW());"
++}
++
+diff -bruN raddb.orig/sql.conf raddb/sql.conf
+--- raddb.orig/sql.conf 2016-05-30 13:28:54.683501416 +0200
++++ raddb/sql.conf      2014-04-14 16:18:49.265464000 +0200
+@@ -25,7 +25,8 @@
+        #
+        #       mysql, mssql, oracle, postgresql
+        #
+-       database = "mysql"
++       #database = "mysql"
++       database = "postgresql"
+ 
+        #
+        #  Which FreeRADIUS driver to use.
+@@ -33,10 +34,10 @@
+        driver = "rlm_sql_${database}"
+ 
+        # Connection info:
+-       server = "localhost"
++       server = "pgauth"
+        #port = 3306
+        login = "radius"
+-       password = "radpass"
++       password = "radius password"
+ 
+        # Database table configuration for everything except Oracle
+        radius_db = "radius"
+@@ -64,7 +65,7 @@
+ 
+        # If set to 'yes' (default) we read the group tables
+        # If set to 'no' the user MUST have Fall-Through = Yes in the radreply table
+-       # read_groups = yes
++       read_groups = yes
+ 
+        # Remove stale session if checkrad does not see a double login
+        deletestalesessions = yes
+

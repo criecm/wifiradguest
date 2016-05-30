@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+    <jsp-config>
+        <jsp-property-group>
+            <description>Property group for common configuration for all the JSP's</description>
+            <url-pattern>*.jsp</url-pattern>
+            <url-pattern>*.html</url-pattern>
+            <el-ignored>true</el-ignored>
+            <page-encoding>UTF-8</page-encoding>
+        </jsp-property-group>
+    </jsp-config>
+    
+    <context-param>
+        <param-name>ldaphost_r</param-name>
+        <param-value>ldaps://ldapr.univ.fr</param-value>
+    </context-param>
+    <context-param>
+        <param-name>search_r</param-name>
+        <param-value>ou=People,dc=univ,dc=fr</param-value>
+    </context-param>
+    <context-param>
+        <param-name>password_r</param-name>
+        <param-value>ldapuserpass</param-value>
+    </context-param>
+    <context-param>
+        <param-name>ldapuser_r</param-name>
+        <param-value>cn=read-onlyuser,dc=univ,dc=fr</param-value>
+    </context-param>
+    <context-param>
+        <param-name>ssl</param-name>
+        <param-value>1</param-value>
+    </context-param>
+     <context-param>
+        <param-name>admingroup</param-name>
+        <param-value>login1:login2</param-value>
+    </context-param>
+    <context-param>
+        <param-name>ssid</param-name>
+        <param-value>ECM</param-value>
+    </context-param>
+    <context-param>
+            <param-name>renew</param-name>
+            <param-value>false</param-value>
+    </context-param>
+    <filter>
+        <filter-name>CAS Single Sign Out Filter</filter-name>
+        <filter-class>
+        org.jasig.cas.client.session.SingleSignOutFilter
+        </filter-class>
+    </filter>
+    <filter>
+        <filter-name>CAS Authentication Filter</filter-name>
+        <filter-class>
+        org.jasig.cas.client.authentication.AuthenticationFilter
+        </filter-class>
+        <init-param>
+            <param-name>casServerLoginUrl</param-name>
+            <param-value>https://auth.univ.fr/cas/login</param-value>
+        </init-param>
+        <init-param>
+            <param-name>service</param-name>
+            <param-value>https://wifiguest.univ.fr/Arrubaguest/</param-value>
+        </init-param>
+        <init-param>
+            <param-name>gateway</param-name>
+            <param-value>false</param-value>
+        </init-param>
+    </filter>
+    <filter>
+        <filter-name>CAS Validation Filter</filter-name>
+        <filter-class>
+        org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter
+        </filter-class>
+        <init-param>
+            <param-name>casServerUrlPrefix</param-name>
+            <param-value>https://auth.univ.fr/cas</param-value>
+        </init-param>
+        <init-param>
+            <param-name>serverName</param-name>
+            <param-value>https://wifiguest.univ.fr</param-value>
+        </init-param>
+        <init-param>
+            <param-name>redirectAfterValidation</param-name>
+            <param-value>true</param-value>
+        </init-param>
+    </filter>
+    <filter>
+        <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+        <filter-class>
+         org.jasig.cas.client.util.HttpServletRequestWrapperFilter
+        </filter-class>
+    </filter>
+    <filter>
+        <filter-name>CAS Assertion Thread Local Filter</filter-name>
+        <filter-class>
+         org.jasig.cas.client.util.AssertionThreadLocalFilter
+         </filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>CAS Single Sign Out Filter</filter-name>
+        <url-pattern>/protected/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CAS Authentication Filter</filter-name>
+        <url-pattern>/protected/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CAS Validation Filter</filter-name>
+        <url-pattern>/protected/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+        <url-pattern>/protected/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CAS Assertion Thread Local Filter</filter-name>
+        <url-pattern>/protected/*</url-pattern>
+    </filter-mapping>
+
+    <servlet>
+        <servlet-name>Create_Accounts</servlet-name>
+        <servlet-class>ecm.arrubaguest.server.Create_Accounts</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>LireEvenement</servlet-name>
+        <servlet-class>ecm.arrubaguest.server.LireEvenement</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>Sendpdf</servlet-name>
+        <servlet-class>ecm.arrubaguest.server.Sendpdf</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Create_Accounts</servlet-name>
+        <url-pattern>/Create_Accounts</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>LireEvenement</servlet-name>
+        <url-pattern>/LireEvenement</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>Sendpdf</servlet-name>
+        <url-pattern>/Sendpdf</url-pattern>
+    </servlet-mapping>
+    <session-config>
+         <tracking-mode>COOKIE</tracking-mode>
+        <session-timeout>
+            30
+        </session-timeout>
+    </session-config>
+    <welcome-file-list>
+        <welcome-file>protected/index.jsp</welcome-file>
+    </welcome-file-list>
+</web-app>

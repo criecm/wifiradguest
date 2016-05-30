@@ -1,0 +1,20 @@
+DECLARE 
+row_count int;
+raw_count int;
+BEGIN
+DELETE from radcheck where substring(username from 1 for 7) 
+IN (SELECT firstaccount FROM radadmin WHERE expiration < NOW());
+
+IF found THEN 
+GET DIAGNOSTICS row_count = ROW_COUNT;
+RAISE LOG 'DELETEd % row(s) FROM radcheck', row_count;
+END IF;
+
+DELETE FROM radadmin WHERE expiration < NOW();
+IF found THEN 
+GET DIAGNOSTICS raw_count = ROW_COUNT; 
+RAISE LOG 'DELETEd % row(s) FROM radadmin', raw_count; 
+END IF;
+
+RETURN NEW;
+END;

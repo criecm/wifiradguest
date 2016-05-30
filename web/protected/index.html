@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Arruba Guest</title>
+
+        <!-- Bootstrap -->
+        <link href="protected/css/bootstrap.min.css" rel="stylesheet"/>
+        <link href="protected/css/datepicker3.css" rel="stylesheet"/>
+        <link href="protected/css/bootstrap-combobox.css" rel="stylesheet"/>  
+        <link href="protected/css/jlf.css" rel="stylesheet"/>
+        <link href="protected/css/ladda.css" rel="stylesheet"/>
+        <link href="protected/css/jquery.dataTables.css" rel="stylesheet"/>
+        
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+          <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+          <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+        <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+        <script src="protected/js/jquery-1.11.0.min.js"></script>
+        <script src="protected/js/spin.js"></script>
+        <script src="protected/js/ladda.min.js"></script>
+        <!-- Include all compiled plugins (below), or include individual files as needed -->
+        <script src="protected/js/bootstrap.min.js"></script>
+        <script src="protected/js/bootstrap3-typeahead.min.js"></script> 
+        <!--    <script src="js/typeahead.bundle.js"></script> -->
+        <script type="text/javascript"  src="protected/js/jquery.dataTables.min.js"></script>
+        <script type="text/javascript"  src="protected/js/jquery-DT-pagination.js"></script>
+
+        <script src="protected/js/bootstrap-datepicker.js"></script>
+        <script type="text/javascript" src="protected/js/bootstrap-datepicker.fr.js" charset="UTF-8"></script>
+        <script type="text/javascript" src="protected/js/minajax.js"></script>
+        <script src="protected/js/bootstrap-combobox.js"></script>
+        <script type="text/javascript">
+
+            $(document).ready(function() {
+                    
+                var servurl =  "<%=serveur_url%>"; 
+                
+                init();
+                lauch();
+
+                $("#arrubaform")[0].reset();
+                $("#arrubaform0")[0].reset();
+                $("#arrubaform1")[0].reset();
+                $("#arrubaform3")[0].reset();
+                
+                $("#paneven").hide();
+                $("#panprov").hide();
+                $("#panadd").hide();
+                $("#panpers").hide();
+                $("#tabev").hide();
+                
+                $("#tabens").dataTable({
+                        "bSort": false,       // Disable sorting
+			"iDisplayLength": 20,   //records per page
+			"sDom": "t<'row'<'col-md-6'i><'col-md-6'p>>",
+			"sPaginationType": "bootstrap",
+                        "bAutoWidth": false,
+                  "aoColumns": [
+                    { "sTitle": "Évènement" , "sClass": "center","sWidth": "25em" },
+                    { "sTitle": "Créateur" , "sClass": "center" },
+                    { "sTitle": "Nombre", "sClass":"center","sWidth": "8em"},
+                    { "sTitle": "FirstAccount","sClass": "center" ,"sWidth": "8em"},
+                    { "sTitle": "FirstLogin", "sClass": "center" ,"sWidth": "16em"},
+                    { "sTitle": "Expiration" , "sClass": "center" ,"sWidth": "16em" },
+                    { "sTitle": "Infos" ,"sClass": "center" }
+                    ]      
+                });
+                
+                $('.datepicker').datepicker({
+                    format: 'dd MM yyyy',
+                    language: 'fr',
+                    todayHighlight: true,
+                    autoclose: true,
+                });
+
+                $("#datedeb").datepicker().on('changeDate', function(e) {
+                    console.log(e.format('ddmm'));
+                    shortdeb = e.format('ddmm');
+                });
+
+                $(function() {
+                    /*   $(".dropdown-menu li a").click( function (e){
+                     //e.stopPropagation();  
+                     console.log(e.target.innerHTML);
+                     e.preventDefault();
+                     });
+                     
+
+                    $("#evnt").on('click', function(e) {
+                        //e.stopPropagation();
+                        console.log("Evenementiel");
+                        e.preventDefault();
+                        $("#paneven").show();
+                    });
+                    */
+
+                    $("#event li:first-child").on('click', function(e) {
+                        //e.stopPropagation();
+                        ClearAllPanel();
+                        console.log("Creation Evenementiel");
+                        e.preventDefault();
+                        $("#arrubaform")[0].reset();
+                        $("#paneven").show();
+                    });
+
+                    $("#event li:last-child").on('click', function(e) {
+                        ClearAllPanel();
+                        console.log("Ajout Evenementiel");
+                        $("#searchevnt").val('');
+                        $("#panadd").show();
+                        //   e.stopPropagation();
+                        e.preventDefault();
+                    });
+
+                    $("#prov").on('click', function(e) {
+                        //e.stopPropagation();
+                        console.log("Provisionning");
+                        var d = new Date();
+                        ClearAllPanel();
+                        e.preventDefault();
+                        $("#panprov").show();
+                    });
+
+                    $("#addevnt").on('click', function(e) {
+                        //e.stopPropagation();
+                        ClearAllPanel();
+                        console.log("Tableau Evénement Actifs");
+                        e.preventDefault();
+                        $("#tabens").dataTable().fnClearTable();
+                        lire_radadmin();
+                    });
+
+                    $("#invens").on('click', function(e) {
+                        //e.stopPropagation();
+                        console.log("Ajout de Comptes Invités Enseignant");
+                        ClearAllPanel();
+                        e.preventDefault();
+                        $("#panpers").show();
+                        $("#idrespers").val("<%=uus%>")
+                        $("#idrespers").attr("disabled",'enable');
+                    });
+
+                     $("#idabout").on('click', function(e) {
+                        e.preventDefault();
+                        $("#about").modal({backdrop:false});
+                        $("#about").modal('show');
+                    });
+
+                    $("#test").on('click', function(e) {
+                        //e.stopPropagation();
+                        console.log("Modal");
+                        e.preventDefault();
+                        $("#mymodal").modal('show');
+                    });
+
+                    $("#btnclose").on('click', function(e) {
+                        console.log("On Ferme");
+                        $("#arrubaform")[0].reset();
+                        e.preventDefault();
+                        $("#paneven").hide();
+                        init_display();
+                    });
+
+                    $("#btnferm").on('click', function(e) {
+                        console.log("On Ferme");
+                        $("#arrubaform0")[0].reset();
+                        e.preventDefault();
+                        $("#panprov").hide();
+                        init_display();
+                    });
+
+                    $("#btnfin").on('click', function(e) {
+                        console.log("On Ferme");
+                        $("#arrubaform1")[0].reset();
+                        e.preventDefault();
+                        $("#panadd").hide();
+                        init_display();
+                    });
+
+                    $("#btnpers").on('click', function(e) {
+                        console.log("On Ferme");
+                        $("#arrubaform3")[0].reset();
+                        e.preventDefault();
+                        $("#panpers").hide();
+                        init_display();
+                    });
+                    
+                    $("#btncas").on('click', function(e) {
+                        console.log("Logout");
+                        e.preventDefault();
+                        Logout();
+                    });
+                    
+        
+                    $('.modal').on('hidden.bs.modal', function (e) {
+                    init_display();
+                    });
+                    
+                    $("#printpdf").on('click', function(e) {
+                        e.preventDefault();
+                        console.log("Impression PDF");
+                      window.location.href = 'http://' + servurl + 'Sendpdf?q=' + pdfile;
+                //    window.location.href = 'http://pcjlf.sysadm.ec-m.fr/Arrubaguest/Sendpdf?q=' + pdfile;
+                    });
+
+                    $('#combo').combobox();
+                    $('#comboduree').combobox();
+                    $('#combopers').combobox();
+
+                    $('.input-group.date').datepicker({});
+
+                });
+            });
+        </script>
+
+        
+        <div class="container">
+        <nav class="navbar navbar-default" role="navigation">
+            <div class="container-fluid">
+                <!-- Brand and toggle get grouped for better mobile display -->
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse-1">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+
+                    <a class="navbar-brand text-muted" href="#"><img src="protected/ecm_logo_white.png"/></a>
+                    <span class="navbar-text">WIFI GUEST PROVISIONING</span>
+                </div>
+
+                <!-- Collect the nav links, forms, and other content for toggling -->
+                <div class="collapse navbar-collapse" id="navbar-collapse-1">
+
+                    <ul class="nav navbar-nav">
+                        <li><a></a></li>
+                        <li><a></a></li>
+                        <li><a></a></li>
+                        <li><a></a></li>
+                        <li><a></a></li>
+                        <li class="dropdown active" >
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Création de Comptes <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                
+                <% if ( status_admin) { %>
+               
+                                <li class="dropdown-submenu">
+                                    <a tabindex="-1" href="#">Évènementiel</a>
+                                    <ul class="dropdown-menu" id="event">
+                                        <li><a tabindex="-1" href="#">Création Comptes</a></li>
+                                        <li><a tabindex="-1" href="#">Ajout de Comptes</a></li>
+                                    </ul>
+                                </li>
+                                <li><a href="#" id="prov">Approvisionnement</a></li>
+                           <!--     <li><a href="#" id="test">Something else here</a></li> -->
+                                <li class="divider"></li>
+                           <% if ( super_admin == "OK") {%>     
+                                <li><a href="#" id="addevnt">Tableau Comptes Actifs</a></li>
+                           <%}else{%> 
+                           <li class="disabled"><a href="#" id="addevnt">Tableau Comptes Actifs</a></li>
+                           <%}%>
+                           
+                                <li class="divider"></li>
+                                <li id="idabout"><a href="#">About ECM Guest Provisioning</a></li>
+                <%}%>
+                <% if (nense == "OK") {%>
+
+                                <li class="dropdown-submenu disabled">
+                                    <a tabindex="-1" href="#">Évènementiel</a>
+                                    <ul class="dropdown-menu" id="event">
+                                        <li class="disabled"><a tabindex="-1" href="#">Création Comptes</a></li>
+                                        <li class="disabled"><a tabindex="-1" href="#">Ajout de Comptes</a></li>
+                                    </ul>
+                                </li>
+                                <li class="disabled"><a href="#" id="prov">Approvisionnement</a></li>
+                        <!--        <li class="disabled"><a href="#" id="test">Tableau Comptes Actifs</a></li> -->
+                                <li class="divider"></li>
+                                <li><a href="#" id="invens">Comptes Invités</a></li>
+                                <li class="divider"></li>
+                                <li id="idabout"><a href="#">About ECM Guest Provisionng</a></li>
+                 <%}%>               
+
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <form class="navbar-form navbar-left" role="search">
+                        <!--     <div class="form-group">
+                                      <input type="text" class="form-control" placeholder="Search"> 
+                                         <input type="text" class="form-control" data-provide="typeahead" id="searchevnt" placeholder="Recherche Evènement"> 
+                                      <input type="text" class="typeahead form-control" id="searchevnt" placeholder="Recherche Evènement"> 
+                                 <button type="button" class="btn btn-primary" id="print_pdf">Impression dernier PDF</button>
+                             </div> -->
+                        <!--   <button type="submit" class="btn btn-default">Submit</button> -->
+                    </form>
+                       
+               <!--      <ul class="nav navbar-nav navbar-left">
+                        <li><a href="#">Contact</a></li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Informations <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#">Docs WIFI CRI</a></li>
+                                <li class="divider"></li>
+                                <li><a href="#">Carographie WIFI</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                -->
+                     <ul class="nav navbar-nav navbar-right">
+                         <li class="navbar-text">Bienvenue <%out.print(uus);%></li>
+                         <li id="divcas"><a href="#"><button class="btn btn-primary btn-xs" id="btncas" title="Logout"><span class="glyphicon glyphicon-off"></span></button></a></li>    
+                    </ul>
+                    
+                </div><!-- /.navbar-collapse -->
+            </div><!-- /.container-fluid -->
+        </nav>
+       
+           
+                <div class="jumbotron" >
+                    <div class="container-fluid"> 
+                        <h2 style="margin: 5% 0 0 8%">ECM Guest Provisioning</h2>
+                        <p></p>
+                        <p style="margin-left: 8%">Gestion des comptes  WIFI invités de l'Ecole Centrale Marseille</p>
+                    </div>    
+                 </div>
+            
+         
+       <div id="idtext" class="row" style="margin-top: 50px;">
+        <div class="col-md-4">
+          <h3>Comptes Évènements</h3>
+          <p>Ces comptes permettent la planification d'évènements tels que, conférences, séminaires, colloques, où les dates de début 
+             et de fin sont définies et le nombre de participant relativement important. Seul le service de l'accueil est habilité à créer ce type de 
+             comptes.</p>
+          
+        </div>
+        <div class="col-md-4">
+          <h3>Provisioning Accueil ECM</h3>
+          <p>Comptes actifs pour une durée déterminée à partir de la premiére connexion de l'utilisateur. Seul le service de l'accueil 
+             est habilité à créer ce type compte. Les comptes peuvent donc être créer à l'avance et en nombre. Ils sont utilisables pendant trente jours à 
+             partir de leurs créations</p>
+          
+       </div>
+        <div class="col-md-4">
+          <h3>Provisioning Personnel ECM</h3>
+          <p>Tous le personnel de l'école est habilité à créer ce type de compte, semblable à celui du Provisioning Accueil. 
+             L'utilisateur ne peut, en revanche, créer qu'un seul compte à la fois, avec un maximun de cinq comptes actifs simultanément.</p>
+        </div>
+      </div>
+                
+           <hr>
+           <footer>
+               <p>&copy; CRI Centrale Marseille 2014</p>
+           </footer>
+                   
+     </div>
+        
+        <div class="container" style="margin-top: 50px">  
+            <div class="row">
+
+                <div class="col-lg-7 col-lg-offset-3">    
+                  
+                    <div id="paneven" class="panel panel-default">
+                        <div class="panel-heading"> 
+                            Création de comptes liés à un évènement
+                            <!--       <button type="button" class="glyphicon glyphicon-remove-sign pull-right"></button> -->
+                            <a id="btnclose" href="#" class="btn btn-xs btn-default pull-right" title="Fermer"><span class="glyphicon glyphicon-remove-sign"></span></a>
+                        </div>
+                        <div class="panel-body">
+
+                            <p class="validateTips">Champs Obligatoires *</p>
+
+                            <form id="arrubaform" class="form-horizontal" autocomplete="off">
+
+                                <!--         <div class="form-group">
+                                                         <label for="test" class="control-label col-xs-4">Nom de l'événement</label>
+                                         <div class="input-group date">
+                                             <input type="text" name="test" class="form-control">
+                                             <span class="input-group-addon"><i class="glyphicon glyphicon-th"></i></span>
+                                         </div>
+                                         </div>
+                                -->             
+                                <div class="form-group">
+                                    <label for="evenement" class="control-label col-xs-4">Nom de l'événement</label>
+                                    <div class="col-xs-8">
+                                        <input type="text" name="evenement" class="form-control" id="evenement" placeholder="Nom de l'événement" autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="form-group">            
+                                    <label for="nbaccount" class="control-label col-xs-4">Nombre de comptes</label>
+                                    <div class="col-xs-6">
+                                        <input type="text" name="nbaccount" class="form-control" id="nbaccount" placeholder="Nombre de comptes à créer" autocomplete="off">  
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="datedeb" class="control-label col-xs-4">Date de début</label>
+                                    <div class="col-xs-6">
+                                        <input class="datepicker" name="idtest" id="datedeb" placeholder="Cliquer">
+                                    </div>
+                                </div>
+                                <div class="form-group">   
+                                    <label for="valduree" class="control-label col-xs-4">Durée du compte</label>
+                                    <div class="col-xs-6">
+                                        <select id="comboduree" class="combobox" name="normal">
+                                            <option value=""> Selectionner</option>
+                                            <option value="0">1 jour</option>
+                                            <option value="1">2 jours</option>
+                                            <option value="2">3 jours</option>
+                                            <option value="4">5 jours</option>
+                                        </select>
+                                    </div>      
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="evntlieu" class="control-label col-xs-4">Lieu(x) de l'événement</label>
+                                    <div class="col-xs-8">
+                                        <input type="text" name="idlieu" class="form-control" id="evntlieu" 
+                                               placeholder="Saisir le(s) lieu(x) de l'évènement">
+                                    </div>
+                                </div>
+
+                                <!--     <button type="button" class="btn btn-primary pull-left">Annuler</button>   -->
+                                <button id="sendevnt" type="submit" class="btn btn-primary pull-right ladda-button" data-size="s" data-style="expand-left"><span class="ladda-label">Envoyer</span></button>
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5 col-lg-offset-3">
+
+                    <div id="panprov" class="panel panel-default">
+                        <div class="panel-heading">Approvisionnement de Comptes
+                            <a id="btnferm" href="#" class="btn btn-xs btn-default pull-right" title="Fermer"><span class="glyphicon glyphicon-remove-sign"></span></a>         
+                        </div>
+                        <div class="panel-body"> 
+
+                            <p class="validateTips0">Champs Obligatoires *</p>
+                            <form id="arrubaform0" autocomplete="off">
+
+                                <div class="form-group">
+                                    <label for="nbacct" class="">Nombre de comptes</label>  
+                                    <input type="text"  class="form-control" id="nbacct" placeholder="Nombre de comptes à créer">
+                                </div>
+
+                                <div class="form-group">   
+                                    <label for="duree" class="">Durée du compte</label>
+
+                                    <select id="combo" class="combobox" name="normal">
+                                        <option value=""> Selectionner</option>
+                                        <option value="0">90 secondes</option>
+                                        <option value="1">8 heures</option>
+                                        <option value="2">12 heures</option>
+                                        <option value="3">24 heures</option>
+                                        <option value="4">36 heures</option>
+                                        <option value="5">48 heures</option>
+                                    </select>
+
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="idrespon" class="">Responsable</label>
+                                    <input type="text"  class="form-control" id="idrespon" placeholder="Nom du responsable">
+                                </div>
+
+                                <button id="sendprov" type="submit" class="btn btn-primary pull-right ladda-button" data-size="s" data-style="expand-left"><span class="ladda-label">Envoyer</span></button> 
+                            </form>
+
+                        </div>
+                    </div>    
+                </div>
+
+                <div class="col-lg-4 col-lg-offset-3">
+
+                    <div id="panadd" class="panel panel-default">
+                        <div class="panel-heading">Ajout Comptes Évènement
+                            <a id="btnfin" href="#" class="btn btn-xs btn-default pull-right" title="Fermer"><span class="glyphicon glyphicon-remove-sign"></span></a>         
+                        </div>
+                        <div class="panel-body"> 
+
+                            <p class="validateTips1">Champs Obligatoires *</p>    
+
+                            <form id="arrubaform1" autocomplete="off">
+
+                                <div class="form-group">
+                                    <label for="searchevnt" class="">Recherche Évènement</label>
+                                    <input type="text" class="form-control" data-provide="typeahead" id="searchevnt" placeholder="Taper 3 caractéres min">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="nbadd" class="">Nombre de comptes</label>
+                                    <input type="text" class="form-control" id="nbadd" placeholder="Nombre de comptes à ajouter">  
+                                </div>
+
+                                <button id="sendadd" type="submit" class="btn btn-primary pull-right ladda-button" data-size="s" data-style="expand-left"><span class="ladda-label">Envoyer</span></button>      
+                            </form>
+                        </div>
+                    </div>    
+                </div>
+
+                <div class="col-lg-4 col-lg-offset-3">
+
+                    <div id="panpers" class="panel panel-default">
+                        <div class="panel-heading panel-title">Création Compte Invité<br>(Max 5 simultanément)
+                            <a id="btnpers" href="#" class="btn btn-xs btn-default pull-right" title="Fermer"><span class="glyphicon glyphicon-remove-sign"></span></a>         
+                        </div>
+                        <div class="panel-body"> 
+
+                            <p class="validateTips3">Champs Obligatoires *</p>
+                            <form id="arrubaform3" autocomplete="off">
+
+                                <!--               <div class="form-group">
+                                                   <label for="nbinv" class="">Nombre de comptes</label>  
+                                                   <input type="text"  class="form-control" id="nbinv" placeholder="Nombre de comptes à créer">
+                                               </div>
+                                -->
+                                <div class="form-group">   
+                                    <label for="dureepers" class="">Durée du compte</label>
+                                    <select id="combopers" class="combobox" name="normal">
+                                        <option value=""> Selectionner</option>
+                                        <option value="0">90 secondes</option>
+                                        <option value="1">8 heures</option>
+                                        <option value="2">12 heures</option>
+                                        <option value="3">24 heures</option>
+                                        <option value="4">36 heures</option>
+                                        <option value="5">48 heures</option>                              
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="idrespers" class="">Responsable</label>
+                                    <input type="text"  class="form-control" id="idrespers" placeholder="Nom du responsable">
+                                </div>
+                                
+                                <button id="sendpers" type="submit" class="btn btn-primary pull-right ladda-button" data-size="s" data-style="expand-left"><span class="ladda-label">Envoyer</span></button> 
+                            </form>
+
+                        </div>
+                    </div>    
+                </div>
+                              
+                        <div id="tabev" class="col-lg-12 col-lg-offset-0">
+                            <table id="tabens" class="table table-condensed table-bordered table-striped">
+                          <!--      <thead>
+                                    <tr>
+                                        <th>ÉVÉNEMENT</th>
+                                        <th>CREATEUR</th>  
+                                        <th>NOMBRE</th>
+                                        <th>FIRSTACCOUNT</th>                                                 
+                                        <th>FIRSTLOGIN</th>
+                                        <th>EXPIRATION</th>
+                                        <th>INFOS</th>                                  
+                                        <th>ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </tbody> -->
+                            </table>
+                        </div>
+                
+                <div id="mymodal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                <h4 class="modal-title">Modal title</h4>
+                            </div>
+                            <div class="modal-body">
+                                <p>One fine body&hellip;</p>
+
+                                <form id="arrubaform2">
+
+                                    <div class="">
+                                        <label for="evenement" class="">Nom de l'événement</label>
+                                        <input type="text" class="form-control" id="evenement" placeholder="Nom de l'événement">
+
+
+                                        <label for="nbaccount" class="">Nombre de comptes</label>
+                                        <input type="text" class="form-control" id="nbaccount" placeholder="Nombre de comptes à créer">  
+                                    </div>
+
+                                    <p>
+                                        <label for="datedeb" class="">Date de Début</label><br>
+                                        <input class="datepicker" id="datedeb" placeholder="Cliquer">
+                                    </p>  
+                                    <p>   
+                                        <label for="datefin" class="">Date de Fin</label><br>
+                                        <input class="datepicker" id="datefin" placeholder="Cliquer">
+                                    </p>
+                                    <p>   
+                                        <label for="duree" class="">Durée du compte</label><br>
+                                        <input type="text" data-provide="typeahead" id="duree" placeholder="Cliquer">
+                                    </p>
+
+                                    <select id="combo" class="combobox" name="normal">
+                                        <option value="" >Selectionner</option>
+                                        <option value="PA">Pennsylvania</option>
+                                        <option value="CT">Connecticut</option>
+                                        <option value="NY">New York</option>
+                                        <option value="MD">Maryland</option>
+                                        <option value="VA">Virginia</option>
+                                    </select>
+
+                                    <button type="submit" class="btn btn-primary pull-right">Envoyer</button>
+
+                                </form>
+
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary">Save changes</button>
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div><!-- /.modal -->
+            </div>
+
+            <div id="accok" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                <div class="modal-dialog modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4 class="modal-title">Résultat de la requête</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>Création de comptes effectués&hellip;</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            <button id="printpdf" type="button" class="btn btn-primary" >Télècharger le PDF</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div><!-- /.modal -->
+
+            <div id="usemax" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                <div class="modal-dialog modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4 class="modal-title">Résultat de la requête</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p><b>Le compte n'a pu être créé </b>&nbsp;<span style="font-size:24px" class="glyphicon glyphicon-warning-sign" ></span></p>
+                            <p><b>Limite maximum de créaton de comptes atteinte</b>&hellip;</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div><!-- /.modal -->
+            
+            <div id="modal_error" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                <div class="modal-dialog modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header panel-danger">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4 class="modal-title">Résultat de la requête</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p><b>Une erreur est survenue sur le serveur </b>&nbsp;<span style="font-size:24px" class="glyphicon glyphicon-warning-sign"></span></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div><!-- /.modal -->
+            
+            <div id="about" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                <div class="modal-dialog modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4 class="modal-title">About ECM Guest Provisioning</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>Application WEB developpée par le CRI Centrale Marseille</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div><!-- /.modal -->
+            
+        </div>
+        
+    </body>
+</html>
