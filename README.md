@@ -2,7 +2,11 @@
 
 Utiliée pour créer des comptes guest temporaires (un par un ou en batch)
 
-Les comptes sont crés dans une base postgresql, qui sert de base à un serveur freeradius.
+Authn/Authz cas/ldap
+
+Les comptes sont crés dans une base postgresql, qui sert de base à un serveur freeradius (auth+acct).
+
+Le serveur freeradius (acct) met à jour l'heure de première connexion et vérifie la validité du compte.
 
 L'application a été développée avec netbeans.
 
