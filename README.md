@@ -20,5 +20,5 @@ Les réglages des accès LDAP et CAS sont dans WEB-INF/web.xml
 
 ## RADIUS
 
-L'application est fonctionelle avec un freeradius 2.2.9 sous FreeBSD avec le diff ci-joint appliqué sur la conf
+L'application est fonctionelle avec un freeradius 3.0.16 sous FreeBSD avec le diff ci-joint appliqué sur la conf
  (modulo l'acces pgsql)
